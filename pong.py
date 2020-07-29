@@ -179,6 +179,8 @@ def choosePlayers():
     amt_players = -1
     while amt_players == -1:
         dontFreeze()
+        text = font.render("Choose amount of human players", False, white)
+        screen.blit(text, [int(screen_width/2-text.get_width()/2), int(screen_height/8-text.get_height()/2)])
         for i in range(3):
             pygame.draw.rect(screen, white, [300*i+200, 550, 200, 100], 5)
             text = font.render(str(i), False, white)
