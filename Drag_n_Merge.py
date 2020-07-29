@@ -74,8 +74,7 @@ class Tile:
     def merge(self, tiles):
         tileY = int((self.pos_y+self.height/2)/100)
         tileX = int((self.pos_x+self.width/2)/100)
-        print(self.pos_x, self.pos_y, sep=' ')
-        if self.clicked and mouseInBounds() and not tiles[tileY][tileX] is None and tiles[tileY][tileX].val == self.val and not tileY == self.y and not tileX == self.x:
+        if self.clicked and not tiles[tileY][tileX] is None and tiles[tileY][tileX].val == self.val and (not tileY == self.y or not tileX == self.x):
             tiles[tileY][tileX].val = tiles[tileY][tileX].val + 1
             return tiles, True, False, [-1, -1]
         return tiles, False, True, [self.x, self.y]
