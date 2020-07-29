@@ -18,15 +18,15 @@ time_left = 1
 mouseDown = False
 game_over = False
 
-cyan = 0, 50, 255
+cyan = 0, 255, 255
 green = 0, 255, 0
 white = 255, 255, 255
 black = 0, 0, 0
 red = 255, 0, 0
 yellow = 0, 255, 255
-orange = 255, 165, 0
-purple = 130, 0, 255
-pink = 255, 0, 255
+orange = 255, 128, 0
+purple = 153, 0, 153
+pink = 255, 0, 127
 
 colors = [cyan, green, white, red, yellow, orange, purple, pink, black]
 background = len(colors)-1
@@ -34,7 +34,7 @@ background = len(colors)-1
 level = 0
 
 class Tile:
-    def __init__(self, x_pos, y_pos, value):
+    def __init__(self, y_pos, x_pos, value):
         self.width = 100 -4 #the minus four is to give little space between each block
         self.height = 100 -4
         self.x = x_pos
@@ -42,36 +42,46 @@ class Tile:
         self.val = value
         self.clicked = False
     def draw(self, tiles):
+        clr = colors[self.val-1]
+        text = font.render(str(self.val), False, white)
         if not self.clicked:
-          pygame.draw.rect(screen, red, [int(self.x*100+2), int(self.y*100+2), int(self.width), int(self.height)])
+           pygame.draw.rect(screen, clr, [int(self.x*100+2), int(self.y*100+2), int(self.width), int(self.height)])
+           screen.blit(text, [int(self.x*100+self.width/2-text.get_width()/2), int(self.y*100+self.height/2-text.get_height()/2)])
         else:
-            pygame.draw.rect(screen, red, [int(pygame.mouse.get_pos()[0]-50), int(pygame.mouse.get_pos()[1]-50), int(self.width), int(self.height)])
+            pygame.draw.rect(screen, clr, [int(pygame.mouse.get_pos()[0]-50), int(pygame.mouse.get_pos()[1]-50), int(self.width), int(self.height)])
+            screen.blit(text, [int(pygame.mouse.get_pos()[0]-text.get_width()/2), int(pygame.mouse.get_pos()[1]-text.get_height()/2)])
     def moveUp(self, tiles):
         self.y = self.y - 1
         if not self.y == -1:
-            return self.exchange(tiles)
+            return exchange(self, tiles, 0, -1)
         else:
             game_over = True
             return tiles
     def gravity(self, tiles):
-        print(str(self.y))
         if not self.y == 7:
-            if tiles[self.x][self.y] is None:
+            if tiles[self.y+1][self.x] is None:
                 self.y = self.y + 1
+                return exchange(self, tiles, 0, 1)
+        return tiles
     def isClicked(self, mouseDown):
-        if pygame.mouse.get_pressed()[0] and not mouseDown and pygame.mouse.get_pos()[0]>self.x*100 and pygame.mouse.get_pos()[0]<self.x*100+self.width and pygame.mouse.get_pos()[1]>self.y*100 and pygame.mouse.get_pos()[1]<self.y*100+self.height:
+        if pygame.mouse.get_pressed()[0] and self.clicked and mouseDown:
+            return True
+        elif pygame.mouse.get_pressed()[0] and not mouseDown and not self.clicked and pygame.mouse.get_pos()[0]>self.x*100 and pygame.mouse.get_pos()[0]<self.x*100+self.width and pygame.mouse.get_pos()[1]>self.y*100 and pygame.mouse.get_pos()[1]<self.y*100+self.height:
             self.clicked = True
             mouseDown = True
-            return True
-        if pygame.mouse.get_pressed()[0] and mouseDown:
             return True
         if self.clicked and not pygame.mouse.get_pressed()[0]:
             mouseDown = False
             self.clicked = False
+            print("test")
         return False
-    def exchange(self, tiles):
-        
-        return tiles
+
+
+def exchange(tile, tiles, changeX, changeY):
+    tiles[tile.y][tile.x] = tile
+    pygame.draw.rect(screen, colors[background], [int(tile.x-changeX*100+2), int(tile.y-changeY*100+2), int(tile.width), int(tile.height)])
+    tiles[tile.y-changeY][tile.x-changeX] = None
+    return tiles
 
 
 def dontFreeze():
@@ -80,23 +90,28 @@ def dontFreeze():
             sys.exit()
 
 def play():
-    global tiles
+    global tiles, mouseDown
     while not game_over:
         dontFreeze()
-        for x in range(len(tiles)):
-            for y in range(len(tiles[x])):
-                if not tiles[x][y] is None:
-                    if tiles[x][y].isClicked(mouseDown):
-                        print("test")
-                    elif not mouseDown and tiles[x][y].isClicked(mouseDown):
-                        print("test")
-                    else: 
-                        tiles[x][y].gravity(tiles)
-                    if time_left == 0 and not mouseDown:
-                        tiles = moveUp(tiles)
+        for y in range(len(tiles)):
+            for x in range(len(tiles[y])):
+                if not tiles[y][x] == None:
+                    tiles[y][x].draw(tiles)
+                    if mouseDown:
+                        print(str(mouseDown))
+                        mouseDown = tiles[y][x].isClicked(mouseDown)
+                        
+                    elif not mouseDown and tiles[y][x].isClicked(mouseDown):
+                        mouseDown = True
+                    if time_left == 0 and not mouseDown and not tiles[y+1][x] is None:
+                        tiles = tiles[y][x].moveUp(tiles)
                         if game_over:
                             break
-                    tiles[x][y].draw(tiles)
+                    if not mouseDown:
+                        tiles = tiles[y][x].gravity(tiles)
+                        if not tiles[y][x] == None and not y == 7 and not tiles[y+1][x] is None and tiles[y][x].val == tiles[y+1][x].val:
+                            tiles[y][x] = None
+                            tiles[y+1][x].val = tiles[y+1][x].val + 1
             if game_over:
                 break
         pygame.display.flip()
@@ -104,4 +119,5 @@ def play():
 
 tiles[1][1] = Tile(1, 1, 5)
 tiles[0][2] = Tile(0, 2, 5)
+tiles[2][3] = Tile(2, 3, 5)
 play()
