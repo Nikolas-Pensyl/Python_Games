@@ -301,8 +301,7 @@ def chooseScoreLimit():
         screen.blit(text, [int(900-text.get_width()/2), int(500-text.get_height()/2)])
         pygame.draw.rect(screen, white, [800, 450, 200, 100], 5)
         if clicked(800, 1000, 450, 550):
-            #score_limit = randint(1, 8)
-            score_limit = 1000
+            score_limit = randint(1, 8)
             break
         pygame.display.flip()
         pygame.draw.rect(screen, colors[background], [0, 0, screen_width, screen_height])
