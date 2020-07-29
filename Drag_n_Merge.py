@@ -64,17 +64,21 @@ class Tile:
                 return exchange(self, tiles, 0, 1)
         return tiles
     def isClicked(self, mouseDown):
-        if pygame.mouse.get_pressed()[0] and self.clicked and mouseDown:
-            return True
-        elif pygame.mouse.get_pressed()[0] and not mouseDown and not self.clicked and pygame.mouse.get_pos()[0]>self.x*100 and pygame.mouse.get_pos()[0]<self.x*100+self.width and pygame.mouse.get_pos()[1]>self.y*100 and pygame.mouse.get_pos()[1]<self.y*100+self.height:
-            self.clicked = True
-            mouseDown = True
-            return True
-        if self.clicked and not pygame.mouse.get_pressed()[0]:
+        if pygame.mouse.get_pressed()[0]:
+            if self.clicked and mouseDown:
+                
+                return True
+            elif not mouseDown and not self.clicked and pygame.mouse.get_pos()[0]>self.x*100 and pygame.mouse.get_pos()[0]<self.x*100+self.width and pygame.mouse.get_pos()[1]>self.y*100 and pygame.mouse.get_pos()[1]<self.y*100+self.height:
+                self.clicked = True
+                mouseDown = True
+                print("test")
+            if self.x == 4:
+                print(self.clicked)
+            return True 
+        else:
             mouseDown = False
             self.clicked = False
-            print("test")
-        return False
+            return False
 
 
 def exchange(tile, tiles, changeX, changeY):
@@ -97,12 +101,7 @@ def play():
             for x in range(len(tiles[y])):
                 if not tiles[y][x] == None:
                     tiles[y][x].draw(tiles)
-                    if mouseDown:
-                        print(str(mouseDown))
-                        mouseDown = tiles[y][x].isClicked(mouseDown)
-                        
-                    elif not mouseDown and tiles[y][x].isClicked(mouseDown):
-                        mouseDown = True
+                    mouseDown = tiles[y][x].isClicked(mouseDown)
                     if time_left == 0 and not mouseDown and not tiles[y+1][x] is None:
                         tiles = tiles[y][x].moveUp(tiles)
                         if game_over:
@@ -117,7 +116,8 @@ def play():
         pygame.display.flip()
         pygame.draw.rect(screen, colors[background], [0, 0, screen_width, screen_height])
 
-tiles[1][1] = Tile(1, 1, 5)
-tiles[0][2] = Tile(0, 2, 5)
-tiles[2][3] = Tile(2, 3, 5)
+#tiles[3][2] = Tile(3, 2, 5)
+tiles[2][2] = Tile(2, 2, 5)
+tiles[4][4] = Tile(4, 4, 5)
 play()
+print(tiles)
