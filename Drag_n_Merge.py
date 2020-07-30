@@ -95,6 +95,10 @@ class Tile:
         tiles[int((self.pos_y+self.height/2)/100)][int((self.pos_x+self.width/2)/100)] = self
         self.x = int((self.pos_x+self.width/2)/100)
         self.y = int((self.pos_y+self.height/2)/100)
+        if not coordsClicked[0] == self.x or not coordsClicked[1] == self.y:
+            tiles[coordsClicked[1]][coordsClicked[0]] = None
+        return tiles
+    def noSharing(self, tiles, coordsClicked):
         return tiles
 
 def getMouseX():
@@ -133,7 +137,6 @@ def play():
             tiles[coordsClicked[1]][coordsClicked[0]].clicked = False
             tiles = tiles[coordsClicked[1]][coordsClicked[0]].setNewCoords(tiles, coordsClicked)
             mouseDown = False 
-            tiles[coordsClicked[1]][coordsClicked[0]] = None
             coordsClicked = [-1, -1]
         for y in range(len(tiles)):
             for x in range(len(tiles[y])-1, -1, -1):
@@ -155,7 +158,7 @@ def play():
                         
                         if y == coordsClicked[1] and x == coordsClicked[0]:
                             merger = False
-                            tiles, merger, mouseDown, coordsClicked = tiles[y][x].merge(tiles)
+                            #tiles, merger, mouseDown, coordsClicked = tiles[y][x].merge(tiles)
                             if merger:
                                 tiles[y][x] = None
             if game_over:
