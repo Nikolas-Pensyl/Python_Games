@@ -82,6 +82,7 @@ class Tile:
         if self.clicked:
             self.pos_x = getMouseX()-self.width/2
             self.pos_y = getMouseY()-self.height/2
+            print((self.pos_x+self.width/2)/100, (self.pos_y+self.height/2)/100, sep=' ')
             if self.pos_x>500:
                 self.pos_x = 502
             if self.pos_y>700:
@@ -90,6 +91,11 @@ class Tile:
                 self.pos_x = 0
             if self.pos_y<0:
                 self.pos_y = 0
+    def setNewCoords(self, tiles, coordsClicked):
+        tiles[int((self.pos_y+self.height/2)/100)][int((self.pos_x+self.width/2)/100)] = self
+        self.x = int((self.pos_x+self.width/2)/100)
+        self.y = int((self.pos_y+self.height/2)/100)
+        return tiles
 
 def getMouseX():
     return pygame.mouse.get_pos()[0]
@@ -109,7 +115,6 @@ def exchange(tile, tiles, changeX, changeY):
     tiles[tile.y-changeY][tile.x-changeX] = None
     return tiles
 
-
 def dontFreeze():
     for event in pygame.event.get():
         if event.type == pygame.QUIT: 
@@ -126,9 +131,9 @@ def play():
             coordsClicked[1] = int(getMouseY()/100)
         elif not pygame.mouse.get_pressed()[0] and mouseDown:
             tiles[coordsClicked[1]][coordsClicked[0]].clicked = False
-            mouseDown = False
-            tiles[coordsClicked[1]][coordsClicked[0]].pos_x = tiles[coordsClicked[1]][coordsClicked[0]].x*100-tiles[coordsClicked[1]][coordsClicked[0]].width/2
-            tiles[coordsClicked[1]][coordsClicked[0]].pos_y = tiles[coordsClicked[1]][coordsClicked[0]].y*100-tiles[coordsClicked[1]][coordsClicked[0]].height/2
+            tiles = tiles[coordsClicked[1]][coordsClicked[0]].setNewCoords(tiles, coordsClicked)
+            mouseDown = False 
+            tiles[coordsClicked[1]][coordsClicked[0]] = None
             coordsClicked = [-1, -1]
         for y in range(len(tiles)):
             for x in range(len(tiles[y])-1, -1, -1):
