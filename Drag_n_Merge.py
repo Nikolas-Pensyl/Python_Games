@@ -18,6 +18,7 @@ time_left = 1
 mouseDown = False
 coordsClicked = [-1, -1]
 game_over = False
+movingTile = None
 
 cyan = 0, 255, 255
 green = 0, 255, 0
@@ -52,12 +53,12 @@ class Tile:
            pygame.draw.rect(screen, clr, [int(self.x*100+2), int(self.y*100+2), int(self.width), int(self.height)])
            screen.blit(text, [int(self.x*100+self.width/2-text.get_width()/2), int(self.y*100+self.height/2-text.get_height()/2)])
         else:
-            pygame.draw.rect(screen, clr, [int(self.pos_x), int(self.pos_y), int(self.width), int(self.height)])
-            screen.blit(text, [int(self.pos_x+self.width/2-text.get_width()/2), int(self.pos_y+self.height/2-text.get_height()/2)])
+            pygame.draw.rect(screen, clr, [int(self.pos_x-self.width/2), int(self.pos_y-self.height/2), int(self.width), int(self.height)])
+            screen.blit(text, [int(self.pos_x-text.get_width()/2), int(self.pos_y-text.get_height()/2)])
     def moveUp(self, tiles):
         self.y = self.y - 1
-        self.pos_x = self.x*100-self.width/2
-        self.pos_y = self.y*100-self.height/2
+        self.pos_x = self.x*100+self.width/2
+        self.pos_y = self.y*100+self.height/2
         if not self.y == -1:
             return exchange(self, tiles, 0, -1)
         else:
@@ -67,22 +68,22 @@ class Tile:
         if not self.y == 7:
             if tiles[self.y+1][self.x] is None:
                 self.y = self.y + 1
-                self.pos_x = self.x*100
-                self.pos_y = self.y*100
+                self.pos_x = self.x*100+self.width/2
+                self.pos_y = self.y*100+self.width/2
                 return exchange(self, tiles, 0, 1)
         return tiles
     def merge(self, tiles):
-        tileY = int((self.pos_y+self.height/2)/100)
-        tileX = int((self.pos_x+self.width/2)/100)
+        tileY = int(self.pos_y/100)
+        tileX = int(self.pos_x/100)
         if self.clicked and not tiles[tileY][tileX] is None and tiles[tileY][tileX].val == self.val and (not tileY == self.y or not tileX == self.x):
             tiles[tileY][tileX].val = tiles[tileY][tileX].val + 1
             return tiles, True, False, [-1, -1]
         return tiles, False, True, [self.x, self.y]
     def updatePos(self):
         if self.clicked:
-            self.pos_x = getMouseX()-self.width/2
-            self.pos_y = getMouseY()-self.height/2
-            print((self.pos_x+self.width/2)/100, (self.pos_y+self.height/2)/100, sep=' ')
+            self.pos_x = getMouseX()
+            self.pos_y = getMouseY()
+            print(self.pos_x/100, self.pos_y/100, sep=' ')
             if self.pos_x>500:
                 self.pos_x = 502
             if self.pos_y>700:
@@ -90,22 +91,130 @@ class Tile:
             if self.pos_x<0:
                 self.pos_x = 0
             if self.pos_y<0:
-                self.pos_y = 0
+                self.pos_y = 0          
     def setNewCoords(self, tiles, coordsClicked):
-        tiles[int((self.pos_y+self.height/2)/100)][int((self.pos_x+self.width/2)/100)] = self
-        self.x = int((self.pos_x+self.width/2)/100)
-        self.y = int((self.pos_y+self.height/2)/100)
+        tiles[int(self.pos_y/100)][int(self.pos_x/100)] = self
+        self.x = int(self.pos_x/100)
+        self.y = int(self.pos_y/100)
         if not coordsClicked[0] == self.x or not coordsClicked[1] == self.y:
             tiles[coordsClicked[1]][coordsClicked[0]] = None
         return tiles
-    def noSharing(self, tiles, coordsClicked):
+    def noSharing(self, tiles):
+        minY = getMinY(tiles, self.pos_x, self.pos_y, self)
+        maxY = getMaxY(tiles, self.pos_x, self.pos_y, self)
+        minX = getMinX(tiles, self.pos_x, self.pos_y, self)
+        maxX = getMaxX(tiles, self.pos_x, self.pos_y, self)
+
+        if getMouseX()>maxX:
+            self.pos_x = maxX
+        elif getMouseX()<minX:
+            self.pos_x = minX
+        else:
+            self.pos_x = getMouseX()
+        if getMouseY()>maxY:
+            self.pos_y = maxY
+        elif getMouseY()<minY:
+            self.pos_y = minY
+        else:
+            self.pos_y = getMouseY()
         return tiles
+
+def getMaxX(tiles, currentX, currentY, tile):
+    maxX = currentX//100
+    top = False
+    bottom = False
+    if currentY%100<48 and currentY>100:
+        top = True
+    elif currentY%100>52 and currentY<700:
+        bottom = True
+    if not currentX//100 == 5:
+        for i in range(int(currentX/100)+1, len(tiles[int(currentY/100)])):
+            if not tiles[int(currentY/100)][i] is None and not tiles[int(currentY/100)][i].val == tile.val:
+                break
+            if top and not tiles[int(currentY/100)-1][i] is None and not tiles[int(currentY/100)-1][i].val == tile.val:
+                break
+            if bottom and not tiles[int(currentY/100)+1][i] is None and not tiles[int(currentY/100)+1][i].val == tile.val:
+                break
+            maxX = i
+        return maxX*100+tile.width/2
+    else:
+        return 600-tile.width/2
+
+def getMinX(tiles, currentX, currentY, tile):
+    minX = currentX//100
+    top = False
+    bottom = False
+    if currentY%100<48 and currentY>100:
+        top = True
+    elif currentY%100>52 and currentY<700:
+        bottom = True
+    if not currentX//100 == 0:
+        for i in range(int(currentX/100)-1, -1, -1):
+            if not tiles[int(currentY/100)][i] is None and not tiles[int(currentY/100)][i].val == tile.val:
+                break
+            if top and not tiles[int(currentY/100)-1][i] is None and not tiles[int(currentY/100)-1][i].val == tile.val:
+                break
+            if bottom and not tiles[int(currentY/100)+1][i] is None and not tiles[int(currentY/100)+1][i].val == tile.val:
+                break
+            minX = i
+        return minX*100+tile.width/2
+    else:
+        return tile.width/2
+
+def getMaxY(tiles, currentX, currentY, tile):
+    maxY = currentY//100
+    left = False
+    right = False
+    if currentX%100<48 and currentX>100:
+        left = True
+    elif currentX%100>52 and currentX<500:
+        right = True
+    if not currentY//100 == 7:
+        for i in range(int(currentY/100)+1, len(tiles)):
+            if not tiles[i][int(currentX/100)] is None and not tiles[i][int(currentX/100)].val == tile.val:
+                break
+            if left and not tiles[i][int(currentX/100)-1] is None and not tiles[i][int(currentX/100)-1].val == tile.val:
+                break
+            if right and not tiles[i][int(currentX/100)+1] is None and not tiles[i][int(currentX/100)+1].val == tile.val:
+                break
+            maxY = i
+        return maxY*100+tile.height/2
+    else:
+        return 800-tile.height/2
+
+def getMinY(tiles, currentX, currentY, tile):
+    minY = currentY//100
+    left = False
+    right = False
+    if currentX%100<48 and currentX>100:
+        left = True
+    elif currentX%100>52 and currentX<500:
+        right = True
+    if not currentY//100 == 0:
+        for i in range(int(currentY/100)-1, -1, -1):
+            if not tiles[i][int(currentX/100)] is None and not tiles[i][int(currentX/100)].val == tile.val:
+                break
+            if left and not tiles[i][int(currentX/100)-1] is None and not tiles[i][int(currentX/100)-1].val == tile.val:
+                break
+            if right and not tiles[i][int(currentX/100)+1] is None and not tiles[i][int(currentX/100)+1].val == tile.val:
+                break
+            minY = i
+        return minY*100+tile.height/2
+    else:
+        return tile.height/2
+        
 
 def getMouseX():
     return pygame.mouse.get_pos()[0]
 
 def getMouseY():
     return pygame.mouse.get_pos()[1]
+
+def getMouseRelX():
+    return pygame.mouse.get_rel()[0]
+
+def getMouseRelY():
+    return pygame.mouse.get_rel()[1]
 
 def mouseInBounds():
     return getMouseY()<800 and getMouseX()<600
@@ -125,42 +234,46 @@ def dontFreeze():
             sys.exit()
 
 def play():
-    global tiles, mouseDown, coordsClicked
+    global tiles, mouseDown, coordsClicked, movingTile
     while not game_over:
         dontFreeze()
-        
         if pygame.mouse.get_pressed()[0] and not mouseDown and mouseInBounds() and not tiles[int(getMouseY()/100)][int(getMouseX()/100)] is None:
             mouseDown = pygame.mouse.get_pressed()[0]
             coordsClicked[0] = int(getMouseX()/100)
             coordsClicked[1] = int(getMouseY()/100)
+            getMouseRelX()
+            getMouseRelY()
+            movingTile = tiles[coordsClicked[1]][coordsClicked[0]]
+            tiles[coordsClicked[1]][coordsClicked[0]] = None
         elif not pygame.mouse.get_pressed()[0] and mouseDown:
-            tiles[coordsClicked[1]][coordsClicked[0]].clicked = False
-            tiles = tiles[coordsClicked[1]][coordsClicked[0]].setNewCoords(tiles, coordsClicked)
+            movingTile.clicked = False
+            tiles = movingTile.setNewCoords(tiles, coordsClicked)
             mouseDown = False 
             coordsClicked = [-1, -1]
+            movingTile = None
         for y in range(len(tiles)):
             for x in range(len(tiles[y])-1, -1, -1):
                 if not tiles[y][x] == None:
-                    if y == coordsClicked[1] and x == coordsClicked[0]:
-                        tiles[y][x].clicked = True
-                        tiles[y][x].updatePos()
                     tiles[y][x].draw(tiles)
                     if time_left == 0 and not mouseDown and not tiles[y+1][x] is None:
                         tiles = tiles[y][x].moveUp(tiles)
                         if game_over:
                             break
                     if not mouseDown:
-                        tiles = tiles[y][x].gravity(tiles)
+                        #tiles = tiles[y][x].gravity(tiles)
                         if not tiles[y][x] == None and not y == 7 and not tiles[y+1][x] is None and tiles[y][x].val == tiles[y+1][x].val:
                             tiles[y][x] = None
                             tiles[y+1][x].val = tiles[y+1][x].val + 1
-                    else: 
-                        
-                        if y == coordsClicked[1] and x == coordsClicked[0]:
-                            merger = False
-                            #tiles, merger, mouseDown, coordsClicked = tiles[y][x].merge(tiles)
-                            if merger:
-                                tiles[y][x] = None
+                else:
+                    if y == coordsClicked[1] and x == coordsClicked[0]:
+                        movingTile.clicked = True
+                        tiles = movingTile.noSharing(tiles)
+                        #movingTile.updatePos()
+                        movingTile.draw(tiles)
+                        merger = False
+                        tiles, merger, mouseDown, coordsClicked = movingTile.merge(tiles)
+                        if merger:
+                            movingTile = None
             if game_over:
                 break
         pygame.display.flip()
@@ -171,7 +284,7 @@ def play():
 
 tiles[3][3] = Tile(3, 3, 5)
 tiles[2][2] = Tile(2, 2, 5)
-tiles[4][4] = Tile(4, 4, 5)
+tiles[4][4] = Tile(4, 4, 4)
 tiles[5][5] = Tile(5, 5, 5)
 tiles[6][1] = Tile(6, 1, 5)
 tiles[7][5] = Tile(7, 5, 5)
