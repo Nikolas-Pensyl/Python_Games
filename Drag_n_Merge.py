@@ -16,13 +16,18 @@ font = pygame.font.SysFont("comicsansms", 45)
 tiles = [[None for x in range(6)] for y in range(8)]
 
 prev_time = 0
-timeLeft = 10
-next_time = time()+10
+speed = 10
+timeLeft = speed/2
+next_time = time()+speed/2
 mouseDown = False
 coordsClicked = [-1, -1]
 game_over = False
 movingTile = None
 maxTile = 5
+
+alpha = 100
+lightness = 50
+sat = 100
 
 cyan = 0, 255, 255
 green = 0, 255, 0
@@ -34,7 +39,7 @@ orange = 255, 128, 0
 purple = 153, 0, 153
 pink = 255, 0, 127
 
-colors = [cyan, green, white, red, yellow, orange, purple, pink, black]
+colors = [cyan, green, white, red, yellow, orange, purple, pink, black, green, green, green, green, green, green, green]
 background = len(colors)-1
 
 level = 0
@@ -51,7 +56,8 @@ class Tile:
         self.val = value
         self.clicked = False
     def draw(self, tiles):
-        clr = colors[self.val-1]
+        clr = pygame.Color(0)
+        clr.hsla = 360-18*self.val, sat, lightness, alpha
         text = font.render(str(self.val), False, white)
         if not self.clicked:
            pygame.draw.rect(screen, clr, [int(self.x*100+(offset/2)+boardOffSetX), int(self.y*100+(offset/2)+boardOffSetY), int(self.width), int(self.height)])
@@ -82,18 +88,12 @@ class Tile:
         tileX = int(self.pos_x/100)
         if self.clicked and not tiles[tileY][tileX] is None and tiles[tileY][tileX].val == self.val and (not tileY == self.y or not tileX == self.x):
             tiles[tileY][tileX].val = tiles[tileY][tileX].val + 1
+            tiles[self.y][self.x] = None
             if tiles[tileY][tileX].val>maxTile:
                 maxTile = tiles[tileY][tileX].val
             return tiles, True, False, [-1, -1], maxTile
         return tiles, False, True, [self.x, self.y], maxTile       
-    def setNewCoords(self, tiles, coordsClicked):
-        tiles[int(self.pos_y/100)][int(self.pos_x/100)] = self
-        self.x = int(self.pos_x/100)
-        self.y = int(self.pos_y/100)
-        if not coordsClicked[0] == self.x or not coordsClicked[1] == self.y:
-            tiles[coordsClicked[1]][coordsClicked[0]] = None
-        return tiles
-    def noSharing(self, tiles):
+    def noSharing(self, tiles, clickY, clickX):
         minY = getMinY(tiles, self.pos_x, self.pos_y, self)
         maxY = getMaxY(tiles, self.pos_x, self.pos_y, self)
         minX = getMinX(tiles, self.pos_x, self.pos_y, self)
@@ -111,8 +111,10 @@ class Tile:
             self.pos_y = minY
         else:
             self.pos_y = getMouseY()
-        self.x = int(self.pos_x/100)
-        self.y = int(self.pos_x/100)
+        
+        if tiles[int(self.pos_y/100)][int(self.pos_x/100)] is None and (not self.x == int(self.pos_x/100) or not self.y == int(self.pos_y/100)):
+            self.x = int(self.pos_x/100)
+            self.y = int(self.pos_y/100)
         return tiles
 
 def getMaxX(tiles, currentX, currentY, tile):
@@ -228,8 +230,8 @@ def dontFreeze():
         if event.type == pygame.QUIT: 
             sys.exit()
 
-def drawStuff(screen):
-    pygame.draw.rect(screen, colors[2], [25, 990-int(timeLeft*80), 50, int(timeLeft*80)])
+def drawStuff(screen, speed):
+    pygame.draw.rect(screen, colors[2], [25, 990-int(timeLeft*800/speed), 50, int(timeLeft*800/speed)])
     pygame.draw.rect(screen, colors[2], [25, 190, 50, 800], 5)
     pygame.draw.rect(screen, colors[2], [0+boardOffSetX, 0+boardOffSetY, 600, 800], 4)
     text = font.render("Round: " + str(level), False, white)
@@ -238,10 +240,10 @@ def drawStuff(screen):
 
 
 def play():
-    global maxTile, screen, tiles, mouseDown, coordsClicked, movingTile, timeLeft, level, next_time, game_over
+    global speed, maxTile, screen, tiles, mouseDown, coordsClicked, movingTile, timeLeft, level, next_time, game_over
     while not game_over:
         dontFreeze()
-        screen = drawStuff(screen)
+        screen = drawStuff(screen, speed)
         if pygame.mouse.get_pressed()[0] and not mouseDown and mouseInBounds() and not tiles[int(getMouseY()/100)][int(getMouseX()/100)] is None:
             mouseDown = pygame.mouse.get_pressed()[0]
             coordsClicked[0] = int(getMouseX()/100)
@@ -249,22 +251,20 @@ def play():
             getMouseRelX()
             getMouseRelY()
             movingTile = tiles[coordsClicked[1]][coordsClicked[0]]
-            tiles[coordsClicked[1]][coordsClicked[0]] = None
         elif not pygame.mouse.get_pressed()[0] and mouseDown:
             movingTile.clicked = False
-            tiles = movingTile.setNewCoords(tiles, coordsClicked)
             mouseDown = False 
             coordsClicked = [-1, -1]
             movingTile = None
         for y in range(len(tiles)):
             for x in range(len(tiles[y])):
-                if not tiles[y][x] == None:
+                if not tiles[y][x] == None and not tiles[y][x] == movingTile:
                     tiles[y][x].draw(tiles)
                     if timeLeft < 0 and not mouseDown:
                         tiles = tiles[y][x].moveUp(tiles)
                         if game_over:
                             break
-                    if not mouseDown and timeLeft>0:
+                    if timeLeft>0:
                         tiles = tiles[y][x].gravity(tiles)
                         if not tiles[y][x] == None and not y == 7 and not tiles[y+1][x] is None and tiles[y][x].val == tiles[y+1][x].val:
                             tiles[y][x] = None
@@ -272,14 +272,19 @@ def play():
                             if tiles[y+1][x].val>maxTile:
                                 maxTile = tiles[y+1][x].val
                 else:
-                    if y == coordsClicked[1] and x == coordsClicked[0]:
+                    if not movingTile is None and tiles[y][x] == movingTile:
                         movingTile.clicked = True
-                        tiles = movingTile.noSharing(tiles)
-                        movingTile.draw(tiles)
                         merger = False
                         tiles, merger, mouseDown, coordsClicked, maxTile = movingTile.merge(tiles, maxTile)
                         if merger:
                             movingTile = None
+                        else:
+                            if (not movingTile.x == x or not movingTile.y == y) and tiles[movingTile.y][movingTile.x] is None:
+                                tiles[movingTile.y][movingTile.x] = movingTile
+                                tiles[y][x] = None
+                            tiles = movingTile.noSharing(tiles, y, x)
+                            movingTile.draw(tiles)
+
             if game_over:
                 break
         if timeLeft <0 and not mouseDown:
@@ -294,13 +299,6 @@ def play():
         if timeLeft > 0:
             timeLeft = next_time-time()
         pygame.display.flip()
-        pygame.draw.rect(screen, colors[background], [0, 0, screen_width, screen_height])
+        pygame.draw.rect(screen, black, [0, 0, screen_width, screen_height])
 
-
-tiles[3][3] = Tile(3, 3, 5)
-tiles[2][2] = Tile(2, 2, 5)
-tiles[4][4] = Tile(4, 4, 4)
-tiles[5][5] = Tile(5, 5, 5)
-tiles[6][1] = Tile(6, 1, 5)
-tiles[7][5] = Tile(7, 5, 5)
 play()
