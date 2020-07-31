@@ -208,12 +208,6 @@ def getMouseX():
 def getMouseY():
     return pygame.mouse.get_pos()[1]-boardOffSetY
 
-def getMouseRelX():
-    return pygame.mouse.get_rel()[0]
-
-def getMouseRelY():
-    return pygame.mouse.get_rel()[1]
-
 def mouseInBounds():
     return getMouseY()<800 and getMouseX()<600
 
@@ -238,7 +232,6 @@ def drawStuff(screen, speed):
     screen.blit(text, [int((screen_width/8)*7-text.get_width()/2), int(screen_height/8-text.get_height()/2)])
     return screen
 
-
 def play():
     global speed, maxTile, screen, tiles, mouseDown, coordsClicked, movingTile, timeLeft, level, next_time, game_over
     while not game_over:
@@ -248,8 +241,6 @@ def play():
             mouseDown = pygame.mouse.get_pressed()[0]
             coordsClicked[0] = int(getMouseX()/100)
             coordsClicked[1] = int(getMouseY()/100)
-            getMouseRelX()
-            getMouseRelY()
             movingTile = tiles[coordsClicked[1]][coordsClicked[0]]
         elif not pygame.mouse.get_pressed()[0] and mouseDown:
             movingTile.clicked = False
