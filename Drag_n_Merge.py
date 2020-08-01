@@ -224,6 +224,21 @@ def dontFreeze():
         if event.type == pygame.QUIT: 
             sys.exit()
 
+def button(stri, x, y, length, height):
+    global screen
+    hover = False
+    if pygame.mouse.get_pos()[0]>x and pygame.mouse.get_pos()[0]<x+length and pygame.mouse.get_pos()[1]>y and pygame.mouse.get_pos()[1]<y+height:
+        hover = True
+        pygame.draw.rect(screen, colors[2], [x, y, length, height])
+        text = font.render(stri, False, black)
+    else:
+        pygame.draw.rect(screen, colors[2], [x, y, length, height], 3)
+        text = font.render(stri, False, white)
+    screen.blit(text, [x+int(length/2-text.get_width()/2), y+int(height/2-text.get_height()/2)])
+    if pygame.mouse.get_pressed()[0] and hover:
+        return True
+    return False
+
 def drawStuff(screen, speed):
     pygame.draw.rect(screen, colors[2], [25, 990-int(timeLeft*800/speed), 50, int(timeLeft*800/speed)])
     pygame.draw.rect(screen, colors[2], [25, 190, 50, 800], 5)
@@ -231,6 +246,33 @@ def drawStuff(screen, speed):
     text = font.render("Round: " + str(level), False, white)
     screen.blit(text, [int((screen_width/8)*7-text.get_width()/2), int(screen_height/8-text.get_height()/2)])
     return screen
+
+def setUp():
+    global screen
+    instruct = False
+    start = False
+    while not start:
+        dontFreeze()
+        if not instruct:
+            text = font.render("Welcome to Drag n' Merge", False, white)
+            screen.blit(text, [int((screen_width/2)-text.get_width()/2), int(screen_height/8-text.get_height()/2)])
+            start = button("Start", int((screen_width/2)-350), int((screen_height/4)*3), 300, 100)
+            instruct = button("Instructions", int((screen_width/2)+50), int((screen_height/4)*3), 300, 100)
+        else:
+            instruct = not button("Go Back", 10, 10, 200, 100)
+            fonte = pygame.font.SysFont("comicsansms", 27)
+            text = fonte.render("Drags tiles to merge with other tiles of the same value", False, white)
+            screen.blit(text, [15, int((screen_height/9)-text.get_height()/2)])
+            text = fonte.render("Tiles of the same value on top of each other", False, white)
+            screen.blit(text, [15, int((screen_height/9)*3-text.get_height()/2)])
+            text = fonte.render("will automactilly become merged", False, white)
+            screen.blit(text, [15, int((screen_height/9)*4-text.get_height()/2)])
+            text = fonte.render("Your goal is to get to 20 before the tiles hit the top", False, white)
+            screen.blit(text, [15, int((screen_height/9)*6-text.get_height()/2)])
+            text = fonte.render("Tiles will move up and be added every time the bar is empty", False, white)
+            screen.blit(text, [15, int((screen_height/9)*8-text.get_height()/2)])
+        pygame.display.flip()
+        pygame.draw.rect(screen, black, [0, 0, screen_width, screen_height])
 
 def play():
     global speed, maxTile, screen, tiles, mouseDown, coordsClicked, movingTile, timeLeft, level, next_time, game_over
@@ -292,4 +334,5 @@ def play():
         pygame.display.flip()
         pygame.draw.rect(screen, black, [0, 0, screen_width, screen_height])
 
+setUp()
 play()
