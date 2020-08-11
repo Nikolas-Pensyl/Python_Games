@@ -218,7 +218,7 @@ def availableMoves(pieces, other_pieces, direction, selected, moves_made, change
         down_left = True
         down_right = True
         iterate = 1
-        while not iterate==7 and (up or down or left or right or up_right or up_left or down_right or down_left):
+        while not iterate==8 and (up or down or left or right or up_right or up_left or down_right or down_left):
             if pieces[selected][2]+iterate>7:
                 right = False
                 up_right = False
