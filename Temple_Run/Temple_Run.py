@@ -35,7 +35,7 @@ ans = [an_zero, an_one, an_two, an_three, an_four, an_five, an_six, an_seven]
 
 
 x_pos = 500
-y_pos = 1858w
+y_pos = 1858
 y_size = 10
 x_size = 5
 
